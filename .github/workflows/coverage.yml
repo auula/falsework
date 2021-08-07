@@ -14,10 +14,6 @@ jobs:
         with:
           toolchain: stable
           override: true
-      - name: Install libsqlite3-dev
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libsqlite3-dev
       - name: Run cargo-tarpaulin
         uses: actions-rs/tarpaulin@v0.1
         with:
