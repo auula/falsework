@@ -5,6 +5,6 @@
 [![codecov](https://codecov.io/gh/higker/falsework/branch/main/graph/badge.svg?token=22QKRI2IFE)](https://codecov.io/gh/higker/falsework)
 ![https://img.shields.io/github/repo-size/higker/falsework](https://img.shields.io/github/repo-size/higker/falsework)
 ![https://img.shields.io/crates/v/falsework](https://img.shields.io/crates/v/falsework)
-![https://img.shields.io/aur/license/falsework](https://img.shields.io/aur/license/falsework)
+[![License](https://img.shields.io/badge/license-Apache-db5149.svg)](https://github.com/higker/falsework/blob/master/LICENSE)
 
 A Commander for modern Rust CLI interactions.
