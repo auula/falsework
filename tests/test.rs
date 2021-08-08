@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod tests {
     use falsework::cmd;
+    use falsework::cmd::Types;
 
     /// Adds one to the number given.
     ///
@@ -30,22 +31,47 @@ mod tests {
 
         app.add_cmd(cmd::Command {
             run: || println!("run 1"),
+            long: "Short is the short description shown in the 'help' output.",
+            short: "cmd short",
             r#use: "cmd1",
+            // aliases: vec![]
+            flags: vec![
+                cmd::Flag {
+                    name: "-d".to_string(),
+                    value: "a".to_string(),
+                    usages: "被加的数字".to_string(),
+                    r#type: Types::I64,
+                }
+            ],
         });
 
-        let cmd_list = &[
-            cmd::Command {
-                run: || println!("run 2"),
-                r#use: "cmd2",
-            },
-            cmd::Command {
-                run: || println!("run 3"),
-                r#use: "cmd3",
-            }
-        ];
-
-        app.commands(cmd_list);
-
+        // let cmd_list = vec![
+        //     cmd::Command {
+        //         run: || println!("run 2"),
+        //         long: "",
+        //         short: "SSSS2",
+        //         r#use: "cmd2",
+        //         // flags: vec![],
+        //         // aliases: vec![]
+        //         flags: &[
+        //
+        //         ]
+        //     },
+        //     cmd::Command {
+        //         run: || println!("run 3"),
+        //         long: "",
+        //         short: "",
+        //         r#use: "cmd3",
+        //         // flags: vec![],
+        //         // aliases: vec![]
+        //     }
+        // ];
+        //
+        // if let Some(elem) = cmd_list.get(0){
+        //     let func = elem.run;
+        //     func()
+        // }
+        // app.commands(cmd_list);
         println!("{:#?}", app);
     }
 }
