@@ -39,12 +39,12 @@ pub mod cli {
             self
         }
 
-        pub fn add_cmd(&mut self, cmd: Command) -> &mut App<'a, 'c_u> {
+        pub fn add_cmd(&mut self, cmd: Command<'c_u>) -> &mut App<'a, 'c_u> {
             self.commands.push(cmd);
             self
         }
 
-        pub fn commands(&mut self, cmd_list: &[Command]) {
+        pub fn commands(&mut self, cmd_list: &[Command<'c_u>]) {
             for &v in cmd_list.into_iter() {
                 self.commands.push(*v);
             }
