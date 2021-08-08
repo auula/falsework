@@ -4,7 +4,8 @@ license = "MIT"
 version = "0.0.1-dev"
 edition = "2018"
 authors = ["Leon Ding <ding@ibyte.me>"]
-description = "A tool crate to quickly build Rust CLI."
+description = "A tool crate to quickly build Rust Command Line Application."
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+

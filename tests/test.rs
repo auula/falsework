@@ -14,4 +14,9 @@ mod tests {
     fn it_works() {
         assert_eq!(5 + 5, 10);
     }
+
+    #[test]
+    fn test_new() {
+        println!("{:?}",falsework::cli::new())
+    }
 }
