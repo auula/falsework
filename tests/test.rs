@@ -17,6 +17,10 @@ mod tests {
 
     #[test]
     fn test_new() {
-        println!("{:?}",falsework::cli::new())
+        let mut app = falsework::cli::new();
+        println!("{:#?}",app);
+        app.name("new name")
+            .author("Leon Ding <ding@ibyte.me>");
+        println!("{:#?}",app);
     }
 }
