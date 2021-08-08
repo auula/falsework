@@ -1,5 +1,7 @@
 #[cfg(test)]
 mod tests {
+    use falsework::cmd::Command;
+
     /// Adds one to the number given.
     ///
     /// # Examples
@@ -18,9 +20,30 @@ mod tests {
     #[test]
     fn test_new() {
         let mut app = falsework::cli::new();
-        println!("{:#?}",app);
+        println!("{:#?}", app);
         app.name("new name")
-            .author("Leon Ding <ding@ibyte.me>");
-        println!("{:#?}",app);
+            .author("Leon Ding <ding@ibyte.me>")
+            .version("0.0.2")
+            .description("a command line program built with Falsework");
+
+        app.add_cmd(Command {
+            run: || println!("run 1"),
+            r#use: "cmd1",
+        });
+
+        let cmd_list: &[Command] = &[
+            Command {
+                run: || println!("run 2"),
+                r#use: "cmd2",
+            },
+            Command {
+                run: || println!("run 3"),
+                r#use: "cmd3",
+            }
+        ];
+
+        app.commands(cmd_list);
+
+        println!("{:#?}", app);
     }
 }

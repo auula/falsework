@@ -45,19 +45,18 @@ pub mod cli {
         }
 
         pub fn commands(&mut self, cmd_list: &[Command<'c_u>]) {
-            for &v in cmd_list.into_iter() {
-                self.commands.push(*v);
+            for &v in cmd_list {
+                self.commands.push(v);
             }
         }
     }
 }
 
 pub mod cmd {
-    use std::io;
 
-    #[derive(Debug)]
+    #[derive(Debug, Clone, Copy)]
     pub struct Command<'c_u> {
-        run: fn() -> Result<String, io::Error>,
-        r#use: &'c_u str,
+        pub run: fn(),
+        pub r#use: &'c_u str,
     }
 }
