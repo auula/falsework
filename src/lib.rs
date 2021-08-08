@@ -1,6 +1,5 @@
 pub mod cli {
-    use crate::cmd::Command;
-
+    use crate::cmd::{Command};
 
     #[derive(Debug)]
     pub struct App<'a, 'c, T> {
@@ -51,6 +50,14 @@ pub mod cli {
             }
         }
 
+        pub fn get_command(&self, r#use: &str) -> Option<&Command<T>> {
+            for v in &self.commands {
+                if v.r#use == r#use {
+                    return Some(v);
+                }
+            }
+            None
+        }
         pub fn run(&self) {}
     }
 }
@@ -102,21 +109,21 @@ pub mod cmd {
 
         pub fn int(&mut self, name: &str, default: T, usages: &str) {
             self.name = name.parse().unwrap();
-            self.value = Box::new(default as i64);
+            self.value = Box::new(default);
             self.r#type = Types::I64;
             self.usages = usages.parse().unwrap()
         }
 
         pub fn bool(&mut self, name: &str, default: T, usages: &str) {
             self.name = name.parse().unwrap();
-            self.value = Box::new(default as bool);
+            self.value = Box::new(default);
             self.r#type = Types::BOOL;
             self.usages = usages.parse().unwrap()
         }
 
         pub fn float(&mut self, name: &str, default: T, usages: &str) {
             self.name = name.parse().unwrap();
-            self.value = Box::new(default as f64);
+            self.value = Box::new(default);
             self.r#type = Types::F64;
             self.usages = usages.parse().unwrap()
         }

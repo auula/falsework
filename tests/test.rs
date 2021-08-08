@@ -38,12 +38,14 @@ mod tests {
             flags: vec![
                 cmd::Flag {
                     name: "-d".to_string(),
-                    value: "a".to_string(),
+                    value: Box::new(1),
                     usages: "被加的数字".to_string(),
                     r#type: Types::I64,
                 }
             ],
         });
+
+
 
         // let cmd_list = vec![
         //     cmd::Command {
@@ -73,5 +75,9 @@ mod tests {
         // }
         // app.commands(cmd_list);
         println!("{:#?}", app);
+
+        let option = app.get_command("cmd1");
+
+        println!("{:?}",option);
     }
 }
