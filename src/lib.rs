@@ -2,15 +2,15 @@ pub mod cli {
     use crate::cmd::{Command};
 
     #[derive(Debug)]
-    pub struct App<'a, 'c, T> {
+    pub struct App<'a, 'c> {
         name: &'a str,
         author: &'a str,
         version: &'a str,
         description: &'a str,
-        commands: Vec<Command<'c, T>>,
+        commands: Vec<Command<'c>>,
     }
 
-    pub fn new<'a, 'c, T>() -> App<'a, 'c, T> {
+    pub fn new<'a, 'c>() -> App<'a, 'c> {
         App {
             name: "Falsework",
             author: "Author name <email@email.com>",
@@ -20,38 +20,47 @@ pub mod cli {
         }
     }
 
-    impl<'a, 'c, T> App<'a, 'c, T> {
-        pub fn name(&mut self, name: &'a str) -> &mut App<'a, 'c, T> {
+    impl<'a, 'c> App<'a, 'c> {
+        pub fn name(&mut self, name: &'a str) -> &mut App<'a, 'c> {
             self.name = name;
             self
         }
-        pub fn author(&mut self, author: &'a str) -> &mut App<'a, 'c, T> {
+        pub fn author(&mut self, author: &'a str) -> &mut App<'a, 'c> {
             self.author = author;
             self
         }
-        pub fn version(&mut self, version: &'a str) -> &mut App<'a, 'c, T> {
+        pub fn version(&mut self, version: &'a str) -> &mut App<'a, 'c> {
             self.version = version;
             self
         }
 
-        pub fn description(&mut self, description: &'a str) -> &mut App<'a, 'c, T> {
+        pub fn description(&mut self, description: &'a str) -> &mut App<'a, 'c> {
             self.description = description;
             self
         }
 
-        pub fn add_cmd(&mut self, cmd: Command<'c, T>) -> &mut App<'a, 'c, T> {
+        pub fn add_cmd(&mut self, cmd: Command<'c>) -> &mut App<'a, 'c> {
             self.commands.push(cmd);
             self
         }
 
-        pub fn commands(&mut self, cmd_list: Vec<Command<'c, T>>) {
+        pub fn commands(&mut self, cmd_list: Vec<Command<'c>>) {
             for v in cmd_list {
                 self.commands.push(v);
             }
         }
 
-        pub fn get_command(&self, r#use: &str) -> Option<&Command<T>> {
+        pub fn get_command(&self, r#use: &str) -> Option<&Command<'c>> {
             for v in &self.commands {
+                if v.r#use == r#use {
+                    return Some(v);
+                }
+            }
+            None
+        }
+
+        pub fn get_command_mut(&mut self, r#use: &str) -> Option<&mut Command<'c>> {
+            for v in &mut self.commands {
                 if v.r#use == r#use {
                     return Some(v);
                 }
@@ -64,21 +73,21 @@ pub mod cli {
 
 pub mod cmd {
     #[derive(Debug)]
-    pub struct Command<'c, T> {
+    pub struct Command<'c> {
         pub run: fn(),
         // Long is the long message shown in the 'help <this-command>' output.
         pub long: &'c str,
         // Short is the short description shown in the 'help' output.
         pub short: &'c str,
         pub r#use: &'c str,
-        pub flags: Vec<Flag<T>>,
+        // pub flags: Vec<Flag<T>>,
         // pub aliases: Vec<&'c str>,
     }
 
-    impl<'c, T> Command<'c, T> {
-        pub fn flags(&mut self) -> &mut Vec<Flag<T>> {
-            &mut self.flags
-        }
+    impl<'c> Command<'c> {
+        // pub fn flags(&mut self) -> &mut Vec<Flag<T>> {
+        //     &mut self.flags
+        // }
     }
 
     #[derive(Debug)]
