@@ -21,25 +21,25 @@ pub mod cli {
     }
 
     impl<'a, 'c> App<'a, 'c> {
-        pub fn name(&mut self, name: &'a str) -> &mut App<'a, 'c> {
+        pub fn name(&mut self, name: &'a str) -> &mut Self {
             self.name = name;
             self
         }
-        pub fn author(&mut self, author: &'a str) -> &mut App<'a, 'c> {
+        pub fn author(&mut self, author: &'a str) -> &mut Self {
             self.author = author;
             self
         }
-        pub fn version(&mut self, version: &'a str) -> &mut App<'a, 'c> {
+        pub fn version(&mut self, version: &'a str) -> &mut Self {
             self.version = version;
             self
         }
 
-        pub fn description(&mut self, description: &'a str) -> &mut App<'a, 'c> {
+        pub fn description(&mut self, description: &'a str) -> &mut Self {
             self.description = description;
             self
         }
 
-        pub fn add_cmd(&mut self, cmd: Command<'c>) -> &mut App<'a, 'c> {
+        pub fn add_cmd(&mut self, cmd: Command<'c>) -> &mut Self {
             self.commands.push(cmd);
             self
         }
@@ -72,15 +72,31 @@ pub mod cli {
 }
 
 pub mod cmd {
+    use std::collections::HashMap;
+    use std::error::Error;
+    use std::env::Args;
+    use std::io;
+
+    pub type RunFunc = fn(
+        ctx: Context, args: Vec<String>,
+    ) -> Result<(), Box<dyn Error>>;
+
     #[derive(Debug)]
+    pub struct Context {
+        pub stdout: io::Stdout,
+        pub stderr: io::Stderr,
+    }
+
+
+    #[derive(Debug, Default)]
     pub struct Command<'c> {
-        pub run: fn(),
+        pub run: Option<RunFunc>,
         // Long is the long message shown in the 'help <this-command>' output.
         pub long: &'c str,
         // Short is the short description shown in the 'help' output.
         pub short: &'c str,
         pub r#use: &'c str,
-        // pub flags: Vec<Flag<T>>,
+        pub flags: Vec<Flag>,
         // pub aliases: Vec<&'c str>,
     }
 
@@ -88,6 +104,9 @@ pub mod cmd {
         // pub fn flags(&mut self) -> &mut Vec<Flag<T>> {
         //     &mut self.flags
         // }
+        pub fn flags(&mut self) -> &mut Vec<Flag> {
+            &mut self.flags
+        }
     }
 
     #[derive(Debug)]
@@ -99,43 +118,53 @@ pub mod cmd {
     }
 
     #[derive(Debug)]
-    pub struct Flag<T> {
-        pub name: String,
+    pub struct Flag {
+        pub flag: String,
+        pub default: String,
         pub r#type: Types,
         pub usages: String,
-        pub value: Box<T>,
+        // pub value: Box<T>,
     }
 
-    impl<T> Flag<T> {
+    impl Flag {
         // s2s add -x 10 -y 10 = 20
         // -x i64 default= 10 usages 加数
-        pub fn string(&mut self, name: &str, default: T, usages: &str) {
-            self.name = name.parse().unwrap();
-            self.value = Box::new(default);
+
+        pub fn bound_string(&mut self, value: &mut String, flag: &str, default: &str, usages: &str) -> Result<(), Box<dyn Error>> {
             self.r#type = Types::STRING;
-            self.usages = usages.parse().unwrap()
+            self.usages = usages.parse().unwrap();
+            self.flag = flag.parse().unwrap();
+            // value = xx;
+            Ok(())
         }
 
-        pub fn int(&mut self, name: &str, default: T, usages: &str) {
-            self.name = name.parse().unwrap();
-            self.value = Box::new(default);
-            self.r#type = Types::I64;
-            self.usages = usages.parse().unwrap()
-        }
-
-        pub fn bool(&mut self, name: &str, default: T, usages: &str) {
-            self.name = name.parse().unwrap();
-            self.value = Box::new(default);
-            self.r#type = Types::BOOL;
-            self.usages = usages.parse().unwrap()
-        }
-
-        pub fn float(&mut self, name: &str, default: T, usages: &str) {
-            self.name = name.parse().unwrap();
-            self.value = Box::new(default);
-            self.r#type = Types::F64;
-            self.usages = usages.parse().unwrap()
-        }
+        // pub fn string(&mut self, name: &str, default: T, usages: &str) {
+        //     self.name = name.parse().unwrap();
+        //     self.value = Box::new(default);
+        //     self.r#type = Types::STRING;
+        //     self.usages = usages.parse().unwrap()
+        // }
+        //
+        // pub fn int(&mut self, name: &str, default: T, usages: &str) {
+        //     self.name = name.parse().unwrap();
+        //     self.value = Box::new(default);
+        //     self.r#type = Types::I64;
+        //     self.usages = usages.parse().unwrap()
+        // }
+        //
+        // pub fn bool(&mut self, name: &str, default: T, usages: &str) {
+        //     self.name = name.parse().unwrap();
+        //     self.value = Box::new(default);
+        //     self.r#type = Types::BOOL;
+        //     self.usages = usages.parse().unwrap()
+        // }
+        //
+        // pub fn float(&mut self, name: &str, default: T, usages: &str) {
+        //     self.name = name.parse().unwrap();
+        //     self.value = Box::new(default);
+        //     self.r#type = Types::F64;
+        //     self.usages = usages.parse().unwrap()
+        // }
     }
 }
 
