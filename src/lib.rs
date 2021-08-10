@@ -1,5 +1,6 @@
 pub mod cli {
     use crate::cmd::{Command};
+    use std::collections::HashMap;
 
     #[derive(Debug)]
     pub struct App<'a, 'c> {
@@ -7,7 +8,7 @@ pub mod cli {
         author: &'a str,
         version: &'a str,
         description: &'a str,
-        commands: Vec<Command<'c>>,
+        commands: HashMap<String, Command<'c>>,
     }
 
     pub fn new<'a, 'c>() -> App<'a, 'c> {
@@ -16,7 +17,7 @@ pub mod cli {
             author: "Author name <email@email.com>",
             version: "0.0.1",
             description: "A command line program built with Falsework.",
-            commands: vec![],
+            commands: HashMap::new(),
         }
     }
 
@@ -40,19 +41,19 @@ pub mod cli {
         }
 
         pub fn add_cmd(&mut self, cmd: Command<'c>) -> &mut Self {
-            self.commands.push(cmd);
+            self.commands.insert(cmd.r#use.to_string(), cmd);
             self
         }
 
         pub fn commands(&mut self, cmd_list: Vec<Command<'c>>) {
             for v in cmd_list {
-                self.commands.push(v);
+                self.commands.insert(v.r#use.to_string(), v);
             }
         }
 
         pub fn get_command(&self, r#use: &str) -> Option<&Command<'c>> {
-            for v in &self.commands {
-                if v.r#use == r#use {
+            for (k, v) in self.commands.iter() {
+                if k == r#use {
                     return Some(v);
                 }
             }
@@ -60,14 +61,32 @@ pub mod cli {
         }
 
         pub fn get_command_mut(&mut self, r#use: &str) -> Option<&mut Command<'c>> {
-            for v in &mut self.commands {
-                if v.r#use == r#use {
+            for (k, v) in &mut self.commands.iter_mut() {
+                if k == r#use {
                     return Some(v);
                 }
             }
             None
         }
-        pub fn run(&self) {}
+        pub fn run(&self) {
+            self.print();
+        }
+
+        fn print(&self) {
+            println!("{}\n", self.description);
+            println!("{} {}", self.name, self.version);
+            println!("{}\n", self.author);
+
+            println!("Usage:");
+            println!("  {}  [command] \n", self.name);
+            println!("Available Commands:");
+            for (k, v) in self.commands.iter() {
+                println!("  {}    {}", k, v.long)
+            }
+            println!("\nFlags:");
+            println!("  -h, --help   help for {}\n", self.name);
+            println!("Use \"{} [command] --help\" for more information about a command.", self.name)
+        }
     }
 }
 
@@ -77,9 +96,11 @@ pub mod cmd {
     use std::env::Args;
     use std::io;
 
+    pub type RunResult = Result<(), Box<dyn Error>>;
+
     pub type RunFunc = fn(
         ctx: Context, args: Vec<String>,
-    ) -> Result<(), Box<dyn Error>>;
+    ) -> RunResult;
 
     #[derive(Debug)]
     pub struct Context {
@@ -130,7 +151,7 @@ pub mod cmd {
         // s2s add -x 10 -y 10 = 20
         // -x i64 default= 10 usages 加数
 
-        pub fn bound_string(&mut self, value: &mut String, flag: &str, default: &str, usages: &str) -> Result<(), Box<dyn Error>> {
+        pub fn bound_string(&mut self, value: &mut String, flag: &str, default: &str, usages: &str) -> RunResult {
             self.r#type = Types::STRING;
             self.usages = usages.parse().unwrap();
             self.flag = flag.parse().unwrap();
