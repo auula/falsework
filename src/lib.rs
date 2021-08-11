@@ -141,7 +141,7 @@ pub mod cmd {
             &mut self.flags
         }
 
-        pub fn bound(&mut self, flag: &str, short: &str, usages: &str) {
+        pub fn bound_flag(&mut self, flag: &str, short: &str, usages: &str) {
             self.flags.insert(flag.to_string(), FlagItem {
                 flag: flag.to_string(),
                 short: short.to_string(),
