@@ -1,5 +1,5 @@
 pub mod cli {
-    use crate::cmd::{Command, Flag, Types};
+    use crate::cmd::Command;
     use std::collections::HashMap;
 
     #[derive(Debug)]
@@ -9,7 +9,6 @@ pub mod cli {
         version: &'a str,
         description: &'a str,
         banner: String,
-        flags: Flag,
         commands: HashMap<String, Command<'c>>,
     }
 
@@ -20,7 +19,6 @@ pub mod cli {
             version: "0.0.1",
             description: "A command line program built with Falsework.",
             banner: "".to_string(),
-            flags: Flag { command: "root".to_string(), item: Default::default() },
             commands: HashMap::new(),
         }
     }
@@ -49,9 +47,6 @@ pub mod cli {
             self
         }
 
-        pub fn flags(&mut self) -> &mut Flag {
-            &mut self.flags
-        }
         pub fn add_cmd(&mut self, cmd: Command<'c>) -> &mut Self {
             self.commands.insert(cmd.r#use.to_string(), cmd);
             self
@@ -114,22 +109,18 @@ pub mod cli {
 pub mod cmd {
     use std::collections::HashMap;
     use std::error::Error;
-    use std::env::Args;
     use std::io;
-    use std::rc::Rc;
-    use std::ptr::null;
-    use std::option::Option::Some;
 
     pub type RunResult = Result<(), Box<dyn Error>>;
 
     pub type RunFunc = fn(
-        ctx: Context, args: Vec<String>,
+        Context,
     ) -> RunResult;
 
     #[derive(Debug)]
     pub struct Context {
-        pub stdout: io::Stdout,
-        pub stderr: io::Stderr,
+        pub args: Vec<String>,
+        pub flag: HashMap<String, String>,
     }
 
 
@@ -141,69 +132,42 @@ pub mod cmd {
         // Short is the short description shown in the 'help' output.
         pub short: &'c str,
         pub r#use: &'c str,
-        pub flags: Vec<Flag>,
+        pub flags: HashMap<String, FlagItem>,
         // pub aliases: Vec<&'c str>,
     }
 
     impl<'c> Command<'c> {
-        // pub fn flags(&mut self) -> &mut Vec<Flag<T>> {
-        //     &mut self.flags
-        // }
-        pub fn flags(&mut self) -> &mut Vec<Flag> {
+        pub fn flags(&mut self) -> &mut HashMap<String, FlagItem> {
             &mut self.flags
+        }
+
+        pub fn bound(&mut self, flag: &str, short: &str, usages: &str) {
+            self.flags.insert(flag.to_string(), FlagItem {
+                flag: flag.to_string(),
+                short: short.to_string(),
+                usages: usages.to_string(),
+                value: Vec::new(),
+            });
+        }
+
+        pub fn get_flag(&self, flag: &str) -> Option<&FlagItem> {
+            self.flags.get(flag)
         }
     }
 
-    #[derive(Debug)]
-    pub enum Types {
-        Float(i32),
-        Bool(bool),
-        String(String),
-    }
-
-    //Paola
-    #[derive(Debug)]
-    pub struct Flag {
-        pub command: String,
-        pub item: HashMap<String, FlagItem>,
-    }
 
     #[derive(Debug)]
     pub struct FlagItem {
         pub flag: String,
         pub short: String,
         pub usages: String,
-        pub default: Types,
-        pub value: Box<Types>,
+        pub value: Vec<String>,
     }
 
-    impl Flag {
-        // s2s add -x 10 -y 10 = 20
-        // -x i64 default= 10 usages 加数
 
-        pub fn bound(&mut self, mut boundValue: Option<Types>, flag: &str, short: &str, defValue: Types, usages: &str) -> RunResult {
-            if boundValue.is_none() {
-                match &defValue {
-                    Types::Float(v) => {
-                        boundValue = Option::from(Types::Float(*v));
-                    }
-                    Types::Bool(v) => {
-                        boundValue = Option::from(Types::Bool(*v));
-                    }
-                    Types::String(v) => {
-                        boundValue = Option::from(Types::String(v.clone()));
-                    }
-                }
-            }
-
-            self.item.insert(flag.to_string(), FlagItem {
-                flag: flag.to_string(),
-                short: short.to_string(),
-                usages: usages.to_string(),
-                default: defValue,
-                value: Box::from(boundValue.unwrap()),
-            });
-            Ok(())
+    impl FlagItem {
+        pub fn get_value(&self) -> &[String] {
+            self.value.as_slice()
         }
     }
 }

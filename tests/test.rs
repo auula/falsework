@@ -1,15 +1,12 @@
 #[cfg(test)]
 mod tests {
     use falsework::cmd;
-    use falsework::cmd::{
-        Context,
-        Types,
-    };
     use std::env;
     use std::error::Error;
-    use std::fs::{File, OpenOptions};
+    use std::fs::OpenOptions;
     use std::io;
     use std::io::Write;
+    use std::collections::HashMap;
 
     #[test]
     fn test_build_new() {
@@ -33,19 +30,21 @@ mod tests {
             .description("A command line program built with Falsework.");
 
         app.add_cmd(cmd::Command {
-            run: Option::Some(|ctx, args| -> Result<(), Box<dyn Error>> {
-                println!("{:?}", args);
+            run: Option::Some(|ctx| -> Result<(), Box<dyn Error>> {
+                println!("{:?}", ctx);
                 let mut file = OpenOptions::new()
                     .write(true)
                     .create(true)
                     .truncate(true)
                     .open("/Users/ding/Desktop/falsework/test.txt")?;
-                file.write_all(args[1].as_bytes())?;
+                file.write_all(ctx.args[1].as_bytes())?;
                 Ok(())
             }),
             r#use: "cmd1",
             ..Default::default()
         });
+
+
         if let Some(cmd) = app.get_command("cmd1") {
             match cmd.run {
                 None => {
@@ -54,10 +53,9 @@ mod tests {
                 Some(func) => {
                     match func(
                         cmd::Context {
-                            stdout: io::stdout(),
-                            stderr: io::stderr(),
-                        },
-                        env::args().collect(),
+                            args: env::args().collect(),
+                            flag: HashMap::new(),
+                        }
                     ) {
                         Ok(_) => {}
                         Err(err) => {
@@ -118,8 +116,7 @@ mod tests {
 
     #[test]
     fn test_command_flags() {
-        let mut host: String;
-        let mut root_command = cmd::Command {
+        let root_command = cmd::Command {
             run: Option::None,
             long: "Short is the short description shown in the 'help' output.",
             short: "cmd short",
@@ -130,6 +127,7 @@ mod tests {
         // root_command.flags()[1].bound_string(&mut host, "-h", "127.0.0.1", "主机参数");
 
         // assert_eq!(host, "127.0.0.1");
+        println!("{:#?}", root_command)
     }
 
     #[test]
@@ -137,14 +135,14 @@ mod tests {
         let mut app = falsework::cli::new();
 
         app.add_cmd(cmd::Command {
-            run: Option::Some(|ctx, args| -> Result<(), Box<dyn Error>> {
-                println!("{:?}", args);
+            run: Option::Some(|ctx| -> Result<(), Box<dyn Error>> {
+                println!("{:?}", ctx);
                 let mut file = OpenOptions::new()
                     .write(true)
                     .create(true)
                     .truncate(true)
                     .open("/Users/ding/Desktop/falsework/test.txt")?;
-                file.write_all(args[1].as_bytes())?;
+                file.write_all(ctx.args[1].as_bytes())?;
                 Ok(())
             }),
             r#use: "cmd1",
@@ -158,10 +156,9 @@ mod tests {
                 Some(func) => {
                     match func(
                         cmd::Context {
-                            stdout: io::stdout(),
-                            stderr: io::stderr(),
-                        },
-                        env::args().collect(),
+                            args: env::args().collect(),
+                            flag: HashMap::new(),
+                        }
                     ) {
                         Ok(_) => {}
                         Err(err) => {
@@ -218,16 +215,13 @@ mod tests {
             },
         ]);
 
-        let flag: bool = true;
 
-        app.flags().bound(Option::Some(Types::Bool(flag)), "flag", "-f", Types::Bool(false), "测试flag参数绑定");
-
-        let str:String = "".to_string();
-
-        app.flags().bound(Option::Some(Types::String((str))), "str", "-s", Types::String("测试".to_string()), "测试string参数绑定");
-
-        assert_eq!(str,"测试".to_string());
-
-        println!("{:#?}", app.flags())
+        // app.flags().bound("flag", "-f", "测试flag参数绑定");
+        //
+        // println!("{:#?}", app.flags());
+        //
+        // app.flags().get_flag("flag");
+        //
+        // println!("{:#?}", app.flags().get_flag("flag").unwrap().get_value());
     }
 }
