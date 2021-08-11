@@ -124,6 +124,17 @@ pub mod cmd {
     }
 
 
+    impl Context {
+
+        pub fn value_of(&mut self, flag: &str) -> &mut String {
+            &mut self.flag.get(flag).unwrap()
+        }
+
+        pub fn build_flag(&mut self, fs: HashMap<String, FlagItem>) {
+
+        }
+    }
+
     #[derive(Debug, Default)]
     pub struct Command<'c> {
         pub run: Option<RunFunc>,
