@@ -218,9 +218,15 @@ mod tests {
             },
         ]);
 
-        let flag:bool = true;
+        let flag: bool = true;
 
-        app.flags().bound_bool(flag,"flag","-f",false,"测试flag参数绑定");
+        app.flags().bound(Option::Some(Types::Bool(flag)), "flag", "-f", Types::Bool(false), "测试flag参数绑定");
+
+        let str:String = "".to_string();
+
+        app.flags().bound(Option::Some(Types::String((str))), "str", "-s", Types::String("测试".to_string()), "测试string参数绑定");
+
+        assert_eq!(str,"测试".to_string());
 
         println!("{:#?}", app.flags())
     }

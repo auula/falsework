@@ -9,8 +9,8 @@ pub mod cli {
         version: &'a str,
         description: &'a str,
         banner: String,
-        flags: Flag<T>,
-        commands: HashMap<String, Command<'c, T>>,
+        flags: Flag,
+        commands: HashMap<String, Command<'c>>,
     }
 
     pub fn new<'a, 'c>() -> App<'a, 'c> {
@@ -49,21 +49,21 @@ pub mod cli {
             self
         }
 
-        pub fn flags(&mut self) -> &mut Flag<T> {
+        pub fn flags(&mut self) -> &mut Flag {
             &mut self.flags
         }
-        pub fn add_cmd(&mut self, cmd: Command<'c, T>) -> &mut Self {
+        pub fn add_cmd(&mut self, cmd: Command<'c>) -> &mut Self {
             self.commands.insert(cmd.r#use.to_string(), cmd);
             self
         }
 
-        pub fn commands(&mut self, cmd_list: Vec<Command<'c, T>>) {
+        pub fn commands(&mut self, cmd_list: Vec<Command<'c>>) {
             for v in cmd_list {
                 self.commands.insert(v.r#use.to_string(), v);
             }
         }
 
-        pub fn get_command(&self, r#use: &str) -> Option<&Command<'c, T>> {
+        pub fn get_command(&self, r#use: &str) -> Option<&Command<'c>> {
             for (k, v) in self.commands.iter() {
                 if k == r#use {
                     return Some(v);
@@ -72,7 +72,7 @@ pub mod cli {
             None
         }
 
-        pub fn get_command_mut(&mut self, r#use: &str) -> Option<&mut Command<'c, T>> {
+        pub fn get_command_mut(&mut self, r#use: &str) -> Option<&mut Command<'c>> {
             for (k, v) in &mut self.commands.iter_mut() {
                 if k == r#use {
                     return Some(v);
@@ -117,6 +117,8 @@ pub mod cmd {
     use std::env::Args;
     use std::io;
     use std::rc::Rc;
+    use std::ptr::null;
+    use std::option::Option::Some;
 
     pub type RunResult = Result<(), Box<dyn Error>>;
 
@@ -132,82 +134,77 @@ pub mod cmd {
 
 
     #[derive(Debug, Default)]
-    pub struct Command<'c, T> {
+    pub struct Command<'c> {
         pub run: Option<RunFunc>,
         // Long is the long message shown in the 'help <this-command>' output.
         pub long: &'c str,
         // Short is the short description shown in the 'help' output.
         pub short: &'c str,
         pub r#use: &'c str,
-        pub flags: Vec<Flag<T>>,
+        pub flags: Vec<Flag>,
         // pub aliases: Vec<&'c str>,
     }
 
-    impl<'c, T> Command<'c, T> {
+    impl<'c> Command<'c> {
         // pub fn flags(&mut self) -> &mut Vec<Flag<T>> {
         //     &mut self.flags
         // }
-        pub fn flags(&mut self) -> &mut Vec<Flag<T>> {
+        pub fn flags(&mut self) -> &mut Vec<Flag> {
             &mut self.flags
         }
     }
 
     #[derive(Debug)]
     pub enum Types {
-        Float,
-        Bool,
-        String,
+        Float(i32),
+        Bool(bool),
+        String(String),
     }
+
     //Paola
     #[derive(Debug)]
-    pub struct Flag<T> {
+    pub struct Flag {
         pub command: String,
-        pub item: HashMap<String, FlagItem<T>>,
+        pub item: HashMap<String, FlagItem>,
     }
 
     #[derive(Debug)]
-    pub struct FlagItem<T> {
+    pub struct FlagItem {
         pub flag: String,
         pub short: String,
-        pub r#type: Types,
         pub usages: String,
-        pub default: T,
-        pub value: Rc<T>,
+        pub default: Types,
+        pub value: Box<Types>,
     }
 
-    impl Flag<bool> {
-
+    impl Flag {
         // s2s add -x 10 -y 10 = 20
         // -x i64 default= 10 usages 加数
 
+        pub fn bound(&mut self, mut boundValue: Option<Types>, flag: &str, short: &str, defValue: Types, usages: &str) -> RunResult {
+            if boundValue.is_none() {
+                match &defValue {
+                    Types::Float(v) => {
+                        boundValue = Option::from(Types::Float(*v));
+                    }
+                    Types::Bool(v) => {
+                        boundValue = Option::from(Types::Bool(*v));
+                    }
+                    Types::String(v) => {
+                        boundValue = Option::from(Types::String(v.clone()));
+                    }
+                }
+            }
 
-        // pub fn bound_string(&mut self, value: String, flag: &str, short: &str, default: &str, usages: &str) -> RunResult {
-        //     self.bound(value, flag, short, default, usages, Types::String);
-        //     Ok(())
-        // }
-
-        pub fn bound_bool(&mut self, mut value: bool, flag: &str, short: &str, default: bool, usages: &str) -> RunResult {
-            self.bound(value, flag, short, default, usages, Types::Bool);
-            Ok(())
-        }
-
-        fn bound(&mut self, mut value: bool, flag: &str, short: &str, default: bool, usages: &str, t: Types) {
             self.item.insert(flag.to_string(), FlagItem {
                 flag: flag.to_string(),
                 short: short.to_string(),
-                r#type: t,
                 usages: usages.to_string(),
-                default: default,
-                value: Rc::new((value)),
+                default: defValue,
+                value: Box::from(boundValue.unwrap()),
             });
+            Ok(())
         }
-        // pub fn bound_float(&mut self, mut value: bool, flag: &str, short: &str, default: f32, usages: &str) -> RunResult {
-        //     self.bound(value, flag, short, default, usages, Types::Float);
-        //     Ok(())
-        // }
-
     }
-
-
 }
 
