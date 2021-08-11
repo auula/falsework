@@ -1,5 +1,5 @@
 pub mod cli {
-    use crate::cmd::{Command};
+    use crate::cmd::{Command, Flag, Types};
     use std::collections::HashMap;
 
     #[derive(Debug)]
@@ -8,7 +8,9 @@ pub mod cli {
         author: &'a str,
         version: &'a str,
         description: &'a str,
-        commands: HashMap<String, Command<'c>>,
+        banner: String,
+        flags: Flag<T>,
+        commands: HashMap<String, Command<'c, T>>,
     }
 
     pub fn new<'a, 'c>() -> App<'a, 'c> {
@@ -17,11 +19,18 @@ pub mod cli {
             author: "Author name <email@email.com>",
             version: "0.0.1",
             description: "A command line program built with Falsework.",
+            banner: "".to_string(),
+            flags: Flag { command: "root".to_string(), item: Default::default() },
             commands: HashMap::new(),
         }
     }
 
     impl<'a, 'c> App<'a, 'c> {
+        pub fn banner(&mut self, banner: String) -> &mut Self {
+            self.banner = banner;
+            self
+        }
+
         pub fn name(&mut self, name: &'a str) -> &mut Self {
             self.name = name;
             self
@@ -40,18 +49,21 @@ pub mod cli {
             self
         }
 
-        pub fn add_cmd(&mut self, cmd: Command<'c>) -> &mut Self {
+        pub fn flags(&mut self) -> &mut Flag<T> {
+            &mut self.flags
+        }
+        pub fn add_cmd(&mut self, cmd: Command<'c, T>) -> &mut Self {
             self.commands.insert(cmd.r#use.to_string(), cmd);
             self
         }
 
-        pub fn commands(&mut self, cmd_list: Vec<Command<'c>>) {
+        pub fn commands(&mut self, cmd_list: Vec<Command<'c, T>>) {
             for v in cmd_list {
                 self.commands.insert(v.r#use.to_string(), v);
             }
         }
 
-        pub fn get_command(&self, r#use: &str) -> Option<&Command<'c>> {
+        pub fn get_command(&self, r#use: &str) -> Option<&Command<'c, T>> {
             for (k, v) in self.commands.iter() {
                 if k == r#use {
                     return Some(v);
@@ -60,7 +72,7 @@ pub mod cli {
             None
         }
 
-        pub fn get_command_mut(&mut self, r#use: &str) -> Option<&mut Command<'c>> {
+        pub fn get_command_mut(&mut self, r#use: &str) -> Option<&mut Command<'c, T>> {
             for (k, v) in &mut self.commands.iter_mut() {
                 if k == r#use {
                     return Some(v);
@@ -68,24 +80,33 @@ pub mod cli {
             }
             None
         }
+        // 1. 除了cmd 还需要外面的flag
         pub fn run(&self) {
             self.print();
         }
 
         fn print(&self) {
-            println!("{}\n", self.description);
-            println!("{} {}", self.name, self.version);
-            println!("{}\n", self.author);
-
-            println!("Usage:");
-            println!("  {}  [command] \n", self.name);
-            println!("Available Commands:");
+            let mut commands = String::new();
             for (k, v) in self.commands.iter() {
-                println!("  {}    {}", k, v.long)
+                commands.push_str(format!("\t{}\t{}\n", k, v.long).as_str());
             }
-            println!("\nFlags:");
-            println!("  -h, --help   help for {}\n", self.name);
-            println!("Use \"{} [command] --help\" for more information about a command.", self.name)
+            println!("\
+             {banner} \n\
+             {description} \n\
+             {name} {version} {author}\n\n\
+             Usage:\n\
+             \t{name}  [command] \n\n\
+             Available Commands:\n\
+             {commands}\n\n\
+             Flags:\n\
+             \t-h, --help   help for {name}\n\n\
+             Use \"{name} [command] --help\" for more information about a command.",
+                     name = self.name,
+                     banner = self.banner,
+                     version = self.version,
+                     author = self.author,
+                     commands = commands,
+                     description = self.description);
         }
     }
 }
@@ -95,6 +116,7 @@ pub mod cmd {
     use std::error::Error;
     use std::env::Args;
     use std::io;
+    use std::rc::Rc;
 
     pub type RunResult = Result<(), Box<dyn Error>>;
 
@@ -110,82 +132,82 @@ pub mod cmd {
 
 
     #[derive(Debug, Default)]
-    pub struct Command<'c> {
+    pub struct Command<'c, T> {
         pub run: Option<RunFunc>,
         // Long is the long message shown in the 'help <this-command>' output.
         pub long: &'c str,
         // Short is the short description shown in the 'help' output.
         pub short: &'c str,
         pub r#use: &'c str,
-        pub flags: Vec<Flag>,
+        pub flags: Vec<Flag<T>>,
         // pub aliases: Vec<&'c str>,
     }
 
-    impl<'c> Command<'c> {
+    impl<'c, T> Command<'c, T> {
         // pub fn flags(&mut self) -> &mut Vec<Flag<T>> {
         //     &mut self.flags
         // }
-        pub fn flags(&mut self) -> &mut Vec<Flag> {
+        pub fn flags(&mut self) -> &mut Vec<Flag<T>> {
             &mut self.flags
         }
     }
 
     #[derive(Debug)]
     pub enum Types {
-        I64,
-        F64,
-        BOOL,
-        STRING,
+        Float,
+        Bool,
+        String,
+    }
+    //Paola
+    #[derive(Debug)]
+    pub struct Flag<T> {
+        pub command: String,
+        pub item: HashMap<String, FlagItem<T>>,
     }
 
     #[derive(Debug)]
-    pub struct Flag {
+    pub struct FlagItem<T> {
         pub flag: String,
-        pub default: String,
+        pub short: String,
         pub r#type: Types,
         pub usages: String,
-        // pub value: Box<T>,
+        pub default: T,
+        pub value: Rc<T>,
     }
 
-    impl Flag {
+    impl Flag<bool> {
+
         // s2s add -x 10 -y 10 = 20
         // -x i64 default= 10 usages 加数
 
-        pub fn bound_string(&mut self, value: &mut String, flag: &str, default: &str, usages: &str) -> RunResult {
-            self.r#type = Types::STRING;
-            self.usages = usages.parse().unwrap();
-            self.flag = flag.parse().unwrap();
-            // value = xx;
+
+        // pub fn bound_string(&mut self, value: String, flag: &str, short: &str, default: &str, usages: &str) -> RunResult {
+        //     self.bound(value, flag, short, default, usages, Types::String);
+        //     Ok(())
+        // }
+
+        pub fn bound_bool(&mut self, mut value: bool, flag: &str, short: &str, default: bool, usages: &str) -> RunResult {
+            self.bound(value, flag, short, default, usages, Types::Bool);
             Ok(())
         }
 
-        // pub fn string(&mut self, name: &str, default: T, usages: &str) {
-        //     self.name = name.parse().unwrap();
-        //     self.value = Box::new(default);
-        //     self.r#type = Types::STRING;
-        //     self.usages = usages.parse().unwrap()
+        fn bound(&mut self, mut value: bool, flag: &str, short: &str, default: bool, usages: &str, t: Types) {
+            self.item.insert(flag.to_string(), FlagItem {
+                flag: flag.to_string(),
+                short: short.to_string(),
+                r#type: t,
+                usages: usages.to_string(),
+                default: default,
+                value: Rc::new((value)),
+            });
+        }
+        // pub fn bound_float(&mut self, mut value: bool, flag: &str, short: &str, default: f32, usages: &str) -> RunResult {
+        //     self.bound(value, flag, short, default, usages, Types::Float);
+        //     Ok(())
         // }
-        //
-        // pub fn int(&mut self, name: &str, default: T, usages: &str) {
-        //     self.name = name.parse().unwrap();
-        //     self.value = Box::new(default);
-        //     self.r#type = Types::I64;
-        //     self.usages = usages.parse().unwrap()
-        // }
-        //
-        // pub fn bool(&mut self, name: &str, default: T, usages: &str) {
-        //     self.name = name.parse().unwrap();
-        //     self.value = Box::new(default);
-        //     self.r#type = Types::BOOL;
-        //     self.usages = usages.parse().unwrap()
-        // }
-        //
-        // pub fn float(&mut self, name: &str, default: T, usages: &str) {
-        //     self.name = name.parse().unwrap();
-        //     self.value = Box::new(default);
-        //     self.r#type = Types::F64;
-        //     self.usages = usages.parse().unwrap()
-        // }
+
     }
+
+
 }
 

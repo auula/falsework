@@ -196,4 +196,32 @@ mod tests {
 
         app.run();
     }
+
+    #[test]
+    fn test_flags() {
+        let mut app = falsework::cli::new();
+
+        app.commands(vec![
+            cmd::Command {
+                run: Option::None,
+                long: "cmd 1 long help",
+                short: "cmd 1 short help",
+                r#use: "cmd 1",
+                ..Default::default()
+            },
+            cmd::Command {
+                run: Option::None,
+                long: "cmd 2 long help",
+                short: "cmd 2 short help",
+                r#use: "cmd 2",
+                ..Default::default()
+            },
+        ]);
+
+        let flag:bool = true;
+
+        app.flags().bound_bool(flag,"flag","-f",false,"测试flag参数绑定");
+
+        println!("{:#?}", app.flags())
+    }
 }
