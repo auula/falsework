@@ -1,80 +1,85 @@
 #[cfg(test)]
 mod tests {
-    use falsework::cmd;
-    use falsework::cmd::Types;
+    use falsework::{cmd,app};
+    use std::error::Error;
+    use falsework::cmd::{Command, Flag};
+    use std::env;
+    use std::collections::HashMap;
 
     #[test]
-    fn test_build_new() {
-        let mut app = falsework::cli::new();
+    fn test_command() {
+        let mut map: HashMap<String, Flag> = HashMap::new();
 
-        app.name("new name")
-            .author("Leon Ding <ding@ibyte.me>")
-            .version("0.0.2")
-            .description("a command line program built with Falsework");
+        map.insert("-Z".to_string(), Flag {
+            flag: "-Z",
+            short: "-f short",
+            usages: "-f usages",
+            value: "-f value".to_string(),
+        });
 
-        println!("{:#?}", app);
+        let com = cmd::Command {
+            run: |ctx| -> Result<(), Box<dyn Error>> {
+                println!("{}",ctx.value_of("--host"));
+                Ok(())
+            },
+            long: "cmd 2 long help",
+            short: "cmd 2 short help",
+            r#use: "cmd 2",
+            flags: map,
+        };
+
+        let mut arguments: Vec<String> = Vec::new();
+
+        for argument in env::args() {
+            for x in argument.split("=") {
+                arguments.push(x.to_string());
+            }
+        }
+
+        println!("{:?}", arguments);
+
+        let context = com.context(arguments);
+
+        println!("{:#?}", context);
     }
 
     #[test]
-    fn test_add_command() {
-        let mut app = falsework::cli::new();
+    fn test_new() {
+        let mut app = falsework::app::new();
 
         app.name("new name")
             .author("Leon Ding <ding@ibyte.me>")
             .version("0.0.2")
             .description("A command line program built with Falsework.");
 
-        app.add_cmd(cmd::Command {
-            run: || println!("run 1"),
-            long: "Short is the short description shown in the 'help' output.",
-            short: "cmd short",
-            r#use: "cmd1",
-        });
-        println!("{:#?}", app);
-    }
+        let mut map: HashMap<String, Flag> = HashMap::new();
 
-    #[test]
-    fn test_add_command_list() {
-
-        let mut app = falsework::cli::new();
-
-        app.commands(
-            vec![
-                cmd::Command {
-                    run: || println!("running function by cmd 1"),
-                    long: "cmd 1 long help",
-                    short: "cmd 1 short help",
-                    r#use: "cmd 1",
-                },
-                cmd::Command {
-                    run: || println!("running function by cmd 2"),
-                    long: "cmd 2 long help",
-                    short: "cmd 2 short help",
-                    r#use: "cmd 2",
-                }
-            ]
-        );
-        println!("{:#?}", app);
-    }
-
-    #[test]
-    fn test_get_command_and_mut() {
-        let mut app = falsework::cli::new();
-
-        app.add_cmd(cmd::Command {
-            run: || println!("run 1"),
-            long: "Short is the short description shown in the 'help' output.",
-            short: "cmd short",
-            r#use: "cmd",
+        map.insert("--flag".to_string(), Flag {
+            flag: "--flag",
+            short: "-f short",
+            usages: "-f usages",
+            value: "-f value".to_string(),
         });
 
-        if let Some(cmd) = app.get_command_mut("cmd") {
-            cmd.r#use = "cmd not equal";
-            assert_eq!(cmd.r#use, "cmd not equal")
-        }
+        map.insert("--host".to_string(), Flag {
+            flag: "--host",
+            short: "-f short",
+            usages: "-f usages",
+            value: "-f value".to_string(),
+        });
 
-        if let Some(cmd) = app.get_command("cmd") {
-            assert_eq!(cmd.r#use, "cmd")
-        }
+        let com = cmd::Command {
+            run: |ctx| -> Result<(), Box<dyn Error>> {
+                Ok(())
+            },
+            long: "cmd 2 long help",
+            short: "cmd 2 short help",
+            r#use: "cmd 2",
+            flags: map,
+        };
+
+        app.add_cmd(com);
+
+        println!("{:#?}", app);
     }
 }
