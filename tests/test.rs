@@ -1,85 +1,94 @@
 #[cfg(test)]
 mod tests {
-    use falsework::{cmd,app};
+    use falsework::cmd;
     use std::error::Error;
-    use falsework::cmd::{Command, Flag};
-    use std::env;
-    use std::collections::HashMap;
 
     #[test]
-    fn test_command() {
-        let mut map: HashMap<String, Flag> = HashMap::new();
+    fn test_command_build() {
 
-        map.insert("-Z".to_string(), Flag {
-            flag: "-Z",
-            short: "-f short",
-            usages: "-f usages",
-            value: "-f value".to_string(),
-        });
-
-        let com = cmd::Command {
+        let mut command = cmd::CommandItem {
             run: |ctx| -> Result<(), Box<dyn Error>> {
-                println!("{}",ctx.value_of("--host"));
+                let x = ctx.value_of("--x").parse::<i32>().unwrap();
+                let y = ctx.value_of("--y").parse::<i32>().unwrap();
+                println!("{} + {} = {}", x, y, x + y);
                 Ok(())
             },
-            long: "cmd 2 long help",
-            short: "cmd 2 short help",
-            r#use: "cmd 2",
-            flags: map,
-        };
+            long: "这是一个加法计算程序需要两个flag参数 --x --y",
+            short: "加法计算",
+            r#use: "add",
+        }.build();
 
-        let mut arguments: Vec<String> = Vec::new();
+        command.bound_flag("--x", "加数");
 
-        for argument in env::args() {
-            for x in argument.split("=") {
-                arguments.push(x.to_string());
-            }
-        }
+        command.bound_flag("--y", "被加数");
 
-        println!("{:?}", arguments);
-
-        let context = com.context(arguments);
-
-        println!("{:#?}", context);
+        println!("{:#?}", command);
     }
 
+
     #[test]
-    fn test_new() {
+    fn test_command_add() {
         let mut app = falsework::app::new();
 
-        app.name("new name")
+        app.name("Calculator")
             .author("Leon Ding <ding@ibyte.me>")
             .version("0.0.2")
             .description("A command line program built with Falsework.");
 
-        let mut map: HashMap<String, Flag> = HashMap::new();
-
-        map.insert("--flag".to_string(), Flag {
-            flag: "--flag",
-            short: "-f short",
-            usages: "-f usages",
-            value: "-f value".to_string(),
-        });
-
-        map.insert("--host".to_string(), Flag {
-            flag: "--host",
-            short: "-f short",
-            usages: "-f usages",
-            value: "-f value".to_string(),
-        });
-
-        let com = cmd::Command {
+        let mut command = cmd::CommandItem {
             run: |ctx| -> Result<(), Box<dyn Error>> {
+                let x = ctx.value_of("--x").parse::<i32>().unwrap();
+                let y = ctx.value_of("--y").parse::<i32>().unwrap();
+                println!("{} + {} = {}", x, y, x + y);
                 Ok(())
             },
-            long: "cmd 2 long help",
-            short: "cmd 2 short help",
-            r#use: "cmd 2",
-            flags: map,
-        };
+            long: "这是一个加法计算程序需要两个flag参数 --x --y",
+            short: "加法计算",
+            r#use: "add",
+        }.build();
 
-        app.add_cmd(com);
+        command.bound_flag("--x", "加数");
+        command.bound_flag("--y", "被加数");
+
+        app.add_cmd(command);
 
         println!("{:#?}", app);
     }
+
+    #[test]
+    fn test_add_commands() {
+        let mut app = falsework::app::new();
+
+        app.name("Calculator")
+            .author("Leon Ding <ding@ibyte.me>")
+            .version("0.0.2")
+            .description("A command line program built with Falsework.");
+
+
+        let command_list = vec![
+            cmd::CommandItem {
+                run: |_ctx| -> Result<(), Box<dyn Error>> {
+                    println!("call foo command.");
+                    Ok(())
+                },
+                long: "这是一个测试命令，使用foo将调用foo命令。",
+                short: "foo命令",
+                r#use: "foo",
+            },
+            cmd::CommandItem {
+                run: |_ctx| -> Result<(), Box<dyn Error>> {
+                    println!("call bar command.");
+                    Ok(())
+                },
+                long: "这是一个测试命令，使用bar将调用bar命令。",
+                short: "bar命令",
+                r#use: "bar",
+            },
+        ].iter().map(|c| c.build()).collect();
+
+        app.commands(command_list);
+
+        println!("{:#?}", app);
+    }
+
 }

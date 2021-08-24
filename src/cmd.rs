@@ -12,12 +12,36 @@ pub struct Flag<'f> {
 
 impl<'f> Flag<'f> {}
 
+
+pub type RunFunc<'f> = fn(Context<'f>) -> Result<(), Box<dyn Error>>;
+
+
+pub struct CommandItem<'c, 'f> {
+    pub run: RunFunc<'f>,
+    pub long: &'c str,
+    pub short: &'c str,
+    pub r#use: &'c str,
+}
+
+impl<'c, 'f> CommandItem<'c, 'f> {
+    pub fn build(&self) -> Command<'c, 'f> {
+        Command {
+            run: self.run,
+            long: self.long,
+            short: self.short,
+            r#use: self.r#use,
+            flags: HashMap::new(),
+        }
+    }
+}
+
+
 /// # Command struct
 /// Used to build the command execution body
 #[derive(Debug)]
 pub struct Command<'c, 'f> {
     /// implement this for it to work properly.
-    pub run: fn(Context<'f>) -> Result<(), Box<dyn Error>>,
+    pub run: RunFunc<'f>,
     /// Long is the long message shown in the 'help <this-command>' output.
     pub long: &'c str,
     /// Short is the short description shown in the 'help' output.
@@ -66,8 +90,10 @@ impl<'a> fmt::Display for StrError<'a> {
     }
 }
 
+
+
 impl<'c, 'f> Command<'c, 'f> {
-    pub fn bound_flag(&mut self, flag: &'f str, usages: &'f str) {
+    pub fn bound_flag(&mut self, flag: &'f str, usages: &'f str) -> &mut Self {
         self.flags.insert(
             flag.to_string(),
             Flag {
@@ -76,7 +102,12 @@ impl<'c, 'f> Command<'c, 'f> {
                 value: "".to_string(),
             },
         );
+        self
     }
+
+
+
+
     /// Return context
     pub fn context(&self, args: Vec<String>) -> Context<'f> {
         let mut ctx = Context {
