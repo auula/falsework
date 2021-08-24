@@ -1,18 +1,16 @@
 //! The Command module
-use std::error::Error;
 use std::collections::HashMap;
-
+use std::error::Error;
+use std::fmt;
 
 #[derive(Debug)]
 pub struct Flag<'f> {
     pub flag: &'f str,
-    pub short: &'f str,
     pub usages: &'f str,
     pub value: String,
 }
 
 impl<'f> Flag<'f> {}
-
 
 /// # Command struct
 /// Used to build the command execution body
@@ -37,7 +35,6 @@ pub struct Context<'f> {
     pub args: Vec<String>,
 }
 
-
 impl<'f> Context<'f> {
     pub fn flag(&self, flag: &str) -> Option<&Flag> {
         self.flag.get(flag)
@@ -45,18 +42,32 @@ impl<'f> Context<'f> {
 
     pub fn value_of(&self, flag: &str) -> &str {
         match self.flag.get(flag) {
-            None => {
-                ""
-            }
-            Some(v) => {
-                v.value.as_str()
-            }
+            None => "",
+            Some(v) => v.value.as_str(),
         }
     }
 }
 
-impl<'c, 'f> Command<'c, 'f> {
 
+pub fn err_msg(msg: &str) -> Box<StrError> {
+    Box::new(StrError(msg))
+}
+
+#[derive(Debug)]
+pub struct StrError<'a>(&'a str);
+
+// Error doesn't require you to implement any methods, but
+// your type must also implement Debug and Display.
+impl<'a> Error for StrError<'a> {}
+
+impl<'a> fmt::Display for StrError<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // Delegate to the Display impl for `&str`:
+        self.0.fmt(f)
+    }
+}
+
+impl<'c, 'f> Command<'c, 'f> {
     pub fn help(&self) {
         println!(
             "\t{long}\n\n\
@@ -67,28 +78,32 @@ impl<'c, 'f> Command<'c, 'f> {
         )
     }
 
-    pub fn bound_flag(&mut self, flag: &'f str, short: &'f str, usages: &'f str) {
-        self.flags.insert(flag.to_string(), Flag {
-            flag,
-            short,
-            usages,
-            value: "".to_string(),
-        });
+    pub fn bound_flag(&mut self, flag: &'f str, usages: &'f str) {
+        self.flags.insert(
+            flag.to_string(),
+            Flag {
+                flag,
+                usages,
+                value: "".to_string(),
+            },
+        );
     }
 
     /// Return context
     pub fn context(&self, args: Vec<String>) -> Context<'f> {
-        let mut ctx = Context { flag: HashMap::new(), args: args.clone() };
+        let mut ctx = Context {
+            flag: HashMap::new(),
+            args: args.clone(),
+        };
 
         if args.len() <= 1 {
             return ctx;
         }
 
-        let mut args = &args[1..];
+        let args = &args[1..];
 
         let mut index = 0;
         for v in args.iter() {
-
             // 变量到倒数第二个就不需要遍历
             if index == args.len() - 1 {
                 break;
@@ -96,12 +111,14 @@ impl<'c, 'f> Command<'c, 'f> {
 
             for f in self.flags.iter() {
                 if v == f.0 {
-                    ctx.flag.insert(f.0.clone(), Flag {
-                        flag: f.1.flag,
-                        short: f.1.short,
-                        usages: f.1.usages,
-                        value: args[index + 1..][0].clone(),
-                    });
+                    ctx.flag.insert(
+                        f.0.clone(),
+                        Flag {
+                            flag: f.1.flag,
+                            usages: f.1.usages,
+                            value: args[index + 1..][0].clone(),
+                        },
+                    );
                 }
             }
             index += 1;
