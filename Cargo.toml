@@ -1,7 +1,7 @@
 [package]
 name = "falsework"
 license = "MIT"
-version = "0.0.1-dev"
+version = "0.1.0"
 edition = "2018"
 authors = ["Leon Ding <ding@ibyte.me>"]
 description = "A tool crate to quickly build Rust Command Line Application."

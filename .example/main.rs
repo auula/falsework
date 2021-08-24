@@ -1,5 +1,5 @@
 use std::error::Error;
-use falsework::cmd;
+use falsework::{app, cmd};
 
 fn main() {
     let mut app = falsework::app::new();

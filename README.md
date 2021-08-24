@@ -24,7 +24,7 @@ falsework = "0.1.0"
 
 ```rust
 use std::error::Error;
-use falsework::cmd;
+use falsework::{app, cmd};
 
 fn main() {
     
