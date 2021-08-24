@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use crate::cmd::Command;
-use std::env;
+use std::{env, process};
 
 #[derive(Debug)]
 pub struct App<'a, 'c, 'f> {
@@ -11,7 +11,7 @@ pub struct App<'a, 'c, 'f> {
     banner: String,
     commands: HashMap<String, Command<'c, 'f>>,
 }
-
+提示
 pub fn new<'a, 'c, 'f>() -> App<'a, 'c, 'f> {
     App {
         name: "Falsework",
@@ -58,26 +58,12 @@ impl<'a, 'c, 'f> App<'a, 'c, 'f> {
         }
     }
 
-    pub fn get_command(&self, r#use: &str) -> Option<&Command<'c, 'f>> {
-        for (k, v) in self.commands.iter() {
-            if k == r#use {
-                return Some(v);
-            }
-        }
-        None
+    pub fn get_command_mut(&mut self, r#use: &str) -> Option<&Command<'c, 'f>> {
+        self.commands.get(r#use)
     }
 
-    pub fn get_command_mut(&mut self, r#use: &str) -> Option<&mut Command<'c, 'f>> {
-        for (k, v) in &mut self.commands.iter_mut() {
-            if k == r#use {
-                return Some(v);
-            }
-        }
-        None
-    }
-    // 1. 除了cmd 还需要外面的flag
+
     pub fn run(&self) {
-
         let args = env::args().collect::<Vec<String>>();
 
         if args.len() <= 1 {
@@ -85,17 +71,55 @@ impl<'a, 'c, 'f> App<'a, 'c, 'f> {
             return;
         }
 
+
         match self.commands.get(&*args.as_slice()[1]) {
-            None => { self.print(); }
+            None => {
+                println!();
+                println!("You need this command ?");
+                let cmd = &*args.as_slice()[1];
+                if &*args.as_slice()[1] == "--help" {
+                    self.print();
+                    return;
+                }
+                for key in self.commands.keys() {
+                    if key.contains(&cmd) {
+                        println!("\t{}", key);
+                    }
+                }
+                println!("{} : The corresponding command set was not found!", cmd);
+            }
             Some(cmd) => {
                 let mut arguments: Vec<String> = Vec::new();
 
-                for argument in args {
+                for argument in &args {
                     for x in argument.split("=") {
                         arguments.push(x.to_string());
                     }
                 }
-                (cmd.run)(cmd.context(arguments));
+
+                if args.as_slice().len() == (3 as usize) {
+                    if &*args.as_slice()[2] == "--help" {
+                        println!();
+                        println!("Help:");
+                        println!("  {}", cmd.long);
+                        println!();
+                        println!("Usage:");
+                        println!("  {} {} [flags]", self.name, &cmd.r#use);
+                        println!();
+                        println!("Flags:");
+                        for x in &cmd.flags {
+                            println!("  {}, {}", x.0, x.1.usages);
+                        }
+                        return;
+                    }
+                }
+                match (cmd.run)(cmd.context(arguments)) {
+                    Ok(_) => {}
+                    Err(e) => {
+                        eprintln!("{}", e);
+                        process::exit(1);
+                    }
+                }
             }
         }
     }
@@ -103,25 +127,22 @@ impl<'a, 'c, 'f> App<'a, 'c, 'f> {
     fn print(&self) {
         let mut commands = String::new();
         for (k, v) in self.commands.iter() {
-            commands.push_str(format!("{}\t{}\n", k, v.long).as_str());
+            commands.push_str(format!("{}\t{}", k, v.short).as_str());
         }
-        println!("\
-             {banner} \n\
-             {description} \n\n\
-             {name} {version} {author}\n\n\
-             Usage:\n
-  {name}  [command] \n\n\
-             Available Commands:\n
-  {commands}\n\n\
-             Flags:\n
-  --help   help for {name}\n
-  --debug  debug for {name}\n\n\
-             Use \"{name} [command] --help\" for more information about a command.",
-                 name = self.name,
-                 banner = self.banner,
-                 version = self.version,
-                 author = self.author,
-                 commands = commands,
-                 description = self.description);
+        println!("{}", self.banner);
+        println!();
+        println!("{}", self.description);
+        println!("{name} {version} {author}", name = self.name, version = self.version, author = self.author);
+        println!();
+        println!("Usage:");
+        println!("  {}  [command]", self.name);
+        println!();
+        println!("Available Commands:");
+        println!("  {}", commands);
+        println!();
+        println!("Flags:");
+        println!("  --help   help for {}", self.name);
+        println!();
+        println!("Use \"{} [command] --help\" for more information about a command.", self.name);
     }
 }
