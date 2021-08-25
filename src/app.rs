@@ -84,7 +84,7 @@ impl<'a, 'c, 'f> App<'a, 'c, 'f> {
                 }
                 for key in self.commands.keys() {
                     if key.contains(&cmd) {
-                        println!("\t{}\n", key);
+                        println!("\t{}\n\r", key);
                     }
                 }
                 println!("{} : The corresponding command set was not found!", cmd);

@@ -7,7 +7,7 @@
 ![https://img.shields.io/crates/v/falsework](https://img.shields.io/crates/v/falsework)
 [![License](https://img.shields.io/badge/license-MIT-db5149.svg)](https://github.com/higker/falsework/blob/master/LICENSE)
 
-A tool crate to quickly build rust Command line application.
+A tool crate to quickly build rust command line application.
 
 
 ## 导入依赖
