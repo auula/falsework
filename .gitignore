@@ -26,3 +26,5 @@ test.txt
 
 #/target
 #Cargo.lock
+
+main.rs

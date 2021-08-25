@@ -84,7 +84,7 @@ impl<'a, 'c, 'f> App<'a, 'c, 'f> {
                 }
                 for key in self.commands.keys() {
                     if key.contains(&cmd) {
-                        println!("\t{}", key);
+                        println!("\t{}\n", key);
                     }
                 }
                 println!("{} : The corresponding command set was not found!", cmd);
@@ -128,7 +128,7 @@ impl<'a, 'c, 'f> App<'a, 'c, 'f> {
     fn print(&self) {
         let mut commands = String::new();
         for (k, v) in self.commands.iter() {
-            commands.push_str(format!("{}\t{}", k, v.short).as_str());
+            commands.push_str(format!(" {}\t{}\n\r", k, v.short).as_str());
         }
         println!("{}", self.banner);
         println!();
@@ -139,7 +139,7 @@ impl<'a, 'c, 'f> App<'a, 'c, 'f> {
         println!("  {}  [command]", self.name);
         println!();
         println!("Available Commands:");
-        println!("  {}", commands);
+        println!("{}", commands);
         println!();
         println!("Flags:");
         println!("  --help   help for {}", self.name);
