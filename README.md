@@ -166,7 +166,3 @@ Use "calculator [command] --help" for more information about a command.
         println!("{:#?}", app);
     }
 ```
-
-## 其他
-本项目也是笔者一个练手写的`crate`，看了半个月的`Rust`书，学了点基础，不知道写什么所以撸一个这个玩玩。。
-如果对你有帮助记得`star`，`falsework`目前构建一些`command line application`问题不大，不过源代码写的有点挫。。。后面再改进吧。
